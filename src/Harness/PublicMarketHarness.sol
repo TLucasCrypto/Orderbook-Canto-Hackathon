@@ -2,12 +2,33 @@
 pragma solidity 0.8.24;
 
 import "src/PublicMarket.sol";
+import {Math} from "lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
 
 contract PublicMarketHarness is PublicMarket {
     using StructuredLinkedList for StructuredLinkedList.List;
     using OffersLib for OffersLib.Offer;
     using OptionsLib for OptionsLib.Option;
+    using Math for uint256;
 
+
+    function GetBuyAmount(
+        uint256 pay_amount,
+        uint256 price
+    ) public returns (uint256) {
+        return price.mulDiv(pay_amount, OffersLib.SCALE_FACTOR);
+    }
+
+    function GetBuyAmount(
+        uint256 id
+    ) public returns (uint256) {
+        OffersLib.Offer storage offer = offers[id];
+        return offer.priceToBuy();
+    }
+    
+    function GetReversePrice(uint256 orderId) public returns (uint256) {
+        OffersLib.Offer storage offer = offers[orderId];
+        return offer.reversePrice();
+    }
     function CleanMarkets(
         address tokenOne,
         address tokenTwo
@@ -27,13 +48,13 @@ contract PublicMarketHarness is PublicMarket {
 
         while (greenId != 0) {
             greenRemaining += offers[greenId].pay_amount;
-            greenWant += offers[greenId].buyAmount();
+            greenWant += offers[greenId].priceToBuy();
             _popHead(greenMarket, greenId);
             (, greenId) = marketLists[greenMarket].getAdjacent(0, true);
         }
         while (redId != 0) {
             redRemaining += offers[redId].pay_amount;
-            redWant += offers[redId].buyAmount();
+            redWant += offers[redId].priceToBuy();
             _popHead(redMarket, redId);
             (, redId) = marketLists[redMarket].getAdjacent(0, true);
         }
@@ -61,8 +82,5 @@ contract PublicMarketHarness is PublicMarket {
         return items;
     }
 
-    function _popHead(bytes32 market, uint256 orderId) private {
-        marketLists[market].popFront();
-        delete offers[orderId];
-    }
+
 }

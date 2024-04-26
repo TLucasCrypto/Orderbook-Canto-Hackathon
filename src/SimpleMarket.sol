@@ -5,7 +5,6 @@ import {StructuredLinkedList, IStructureInterface} from "src/Libraries/Structure
 import {OffersLib} from "src/Libraries/OffersLib.sol";
 import {OptionsLib} from "src/Libraries/OptionsLib.sol";
 import {SoladySafeCastLib} from "src/Libraries/SoladySafeCastLib.sol";
-import {IOrderToken} from "src/Interfaces/IOrderToken.sol";
 
 contract SimpleMarket is IStructureInterface {
     using StructuredLinkedList for StructuredLinkedList.List;
@@ -50,46 +49,28 @@ contract SimpleMarket is IStructureInterface {
     }
 
     function _recordOffer(
-        uint96 pay_amt,
-        address pay_tkn,
-        uint256 buy_amt,
-        address buy_tkn
-    ) internal returns(uint256) {
+        OffersLib.Offer memory offer
+    ) internal returns (uint256) {
+        require(offer.owner != address(0), "Uh oh");
+
         uint256 thisOrder = nextOrderId;
         nextOrderId++;
 
-        OffersLib.Offer storage offer = offers[thisOrder];
-        require(!offer.isActive(), "Uh oh");
+        offers[thisOrder] = offer;
 
-        offer.pay_amount = pay_amt;
-        offer.pay_token = pay_tkn;
-        offer.buy_token = buy_tkn;
-        offer.owner = msg.sender;
-        offer.offerCreated = uint40(block.timestamp);
-        // Must be done after pay_amount is set
-        uint256 orderPrice = offer.buyToPrice(buy_amt);
-        if (orderPrice < OffersLib.MAX_PRECISION_LOSS) revert PrecisionLoss();
-        offer.price = orderPrice;
-
-        bytes32 market = getMarket(pay_tkn, buy_tkn);
+        bytes32 market = getMarket(offer.pay_token, offer.buy_token);
         StructuredLinkedList.List storage list = marketLists[market];
 
-        uint256 spot = list.getSortedSpot(address(this), orderPrice);
+        uint256 spot = list.getSortedSpot(address(this), offer.price);
 
         require(list.insertBefore(spot, thisOrder), "Failed Insert");
 
-        emit MakeOffer(thisOrder, market, orderPrice);
-        return(thisOrder);
+        emit MakeOffer(thisOrder, market, offer.price);
+        return (thisOrder);
     }
 
     function _recordOption() internal returns (uint256) {}
 
-
-    function receiveFunds(address pay_token, address from, address receiver) internal returns(uint256){
-        uint256 balanceBefore = IOrderToken(pay_token).balanceOf(receiver);
-        IOrderToken(pay_token).safeTransferFrom(from, receiver, pay_amt);
-        return IOrderToken(pay_token).balanceOf(receiver) - balanceBefore;
-    }
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  Interface Functions                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

@@ -27,7 +27,6 @@ library OffersLib {
         address pay_token;
         address buy_token;
         address owner;
-        uint40 offerCreated;
     }
 
     uint256 internal constant SCALE_FACTOR = 1e27;
@@ -49,7 +48,7 @@ library OffersLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function isActive(Offer storage self) internal view returns (bool) {
-        return self.offerCreated != 0;
+        return self.owner != address(0);
     }
 
     function buyToPrice(
@@ -59,7 +58,7 @@ library OffersLib {
         return buy_amount.mulDiv(SCALE_FACTOR, self.pay_amount);
     }
 
-    function buyAmount(Offer storage self) internal view returns (uint256) {
+    function priceToBuy(Offer storage self) internal view returns (uint256) {
         return self.price.mulDiv(self.pay_amount, SCALE_FACTOR);
     }
 
@@ -82,9 +81,9 @@ library OffersLib {
         Offer storage greenOffer,
         Offer storage redOffer
     ) internal view returns (bool) {
-        if (greenOffer.pay_amount < buyAmount(redOffer)) {
+        if (greenOffer.pay_amount < priceToBuy(redOffer)) {
             return false;
-        } else if (redOffer.pay_amount < buyAmount(greenOffer)) {
+        } else if (redOffer.pay_amount < priceToBuy(greenOffer)) {
             return true;
         } else {
             return
@@ -98,4 +97,13 @@ library OffersLib {
     function reversePrice(Offer storage self) internal view returns (uint256) {
         return SCALE_FACTOR.mulDiv(SCALE_FACTOR, self.price);
     }
+
+
+    function priceToBuy(uint256 price, uint256 pay_amount) internal returns(uint256) {
+        return price.mulDiv(pay_amount, SCALE_FACTOR);
+    }
+    function buyToPrice(uint256 buy_amount, uint256 pay_amount) internal returns(uint256) {
+        return buy_amount.mulDiv(SCALE_FACTOR, pay_amount);
+    }
+
 }

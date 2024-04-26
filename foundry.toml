@@ -2,5 +2,29 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+solc = "0.8.24"
+ignored_error_codes = [
+    "license",
+    "code-size",
+    "init-code-size",
+    "unused-var",
+    "unused-param",
+    "func-mutability",
+]
+
+verbosity = 3
+
+[fuzz]
+runs = 1024
+max_test_rejects = 65536
+dictionary_weight = 40
+include_storage = true
+include_push_bytes = true
+
+
+[rpc_endpoints]
+canto = "https://canto.slingshot.finance"
+localhost = "http://localhost:8545"
+
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
