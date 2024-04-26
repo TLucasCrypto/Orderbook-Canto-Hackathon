@@ -65,7 +65,7 @@ contract MatchingEngine is SimpleMarket {
 
             purchasedAmount += payOut;
             userBalances[offer.owner][payToken] += remainingAmount;
-            emit UserBalanceUpdated(offer.owner, request.pay_token);
+            emit UserBalanceUpdated(offer.owner, payToken);
 
             return (false, 0, purchasedAmount);
         } else {
@@ -74,12 +74,26 @@ contract MatchingEngine is SimpleMarket {
 
             purchasedAmount += offer.pay_amount;
             userBalances[offer.owner][payToken] += payOut;
-            emit UserBalanceUpdated(offer.owner, request.pay_token);
+            emit UserBalanceUpdated(offer.owner, payToken);
 
             _popHead(market, orderId);
             return (true, remainingAmount - payOut, purchasedAmount);
         }
     }
+
+
+    function _takeOption(
+        OptionsLib.Option memory option
+    ) internal returns (uint256) {
+
+    }
+
+    function _processOption(
+
+    ) internal returns (bool) {
+
+    }
+
 
     function _popHead(bytes32 market, uint256 orderId) internal {
         marketLists[market].popFront();

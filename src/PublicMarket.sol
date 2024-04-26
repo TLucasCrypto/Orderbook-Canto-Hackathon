@@ -55,6 +55,47 @@ contract PublicMarket is MatchingEngine {
         return orderId;
     }
 
+    function makeOption(
+        address pay_tkn,
+        uint256 pay_amt,
+        address buy_tkn,
+        uint256 buy_amt,
+        uint256 premium_amt,
+        uint256 expiry
+    ) external returns (uint256) {
+        if (pay_amt == 0) revert InvalidOffer();
+        if (buy_amt == 0) revert InvalidOffer();
+        if (premium_amt == 0) revert InvalidOffer();
+        if (expiry > block.timestamp + MAX_EXPIRY) revert InvalidOffer();
+        if (pay_tkn == address(0)) revert InvalidOffer();
+        if (buy_tkn == address(0)) revert InvalidOffer();
+        if (pay_tkn == buy_tkn) revert InvalidOffer();
+
+        uint256 received = receiveFunds(
+            pay_tkn,
+            pay_amt,
+            msg.sender,
+            address(this)
+        );
+
+        uint256 orderPrice = OptionsLib.buyToPrice(buy_amt, received);
+        if (orderPrice < OptionsLib.MAX_PRECISION_LOSS) revert PrecisionLoss();
+
+        OptionsLib.Option memory option = OptionsLib.Option({
+            price: orderPrice,
+            pay_amount: received.toUint96(),
+            pay_token: pay_tkn,
+            buy_token: buy_tkn,
+            premium: premium_amt.toUint96(),
+            owner: msg.sender,
+            deadline: expiry.toUint40()
+        });
+
+        uint256 orderId = _recordOption(option);
+
+        return orderId;
+    }
+
     function marketBuy(
         address pay_tkn,
         uint256 pay_amt,
@@ -87,9 +128,10 @@ contract PublicMarket is MatchingEngine {
 
         uint256 remaining = _marketBuy(offer);
 
+        // Need to review this
         sendFunds(buy_tkn, msg.sender);
         if (remaining != 0) {
-            IERC20(pay_token).safeTransfer(receiver, remaining);
+            IERC20(pay_tkn).safeTransfer(msg.sender, remaining);
         }
     }
 

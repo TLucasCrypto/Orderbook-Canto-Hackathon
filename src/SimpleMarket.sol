@@ -15,9 +15,12 @@ contract SimpleMarket is IStructureInterface {
     event DEBUG(string s, bytes b);
 
     uint256 nextOrderId = 1;
+    uint256 MAX_EXPIRY = 365 days;
+    address native = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     // User address => Token address => balance
     mapping(address => mapping(address => uint256)) public userBalances;
+    // mapping(address => mapping(address => OptionsLib.Lock)) public lockup;
 
     mapping(uint256 => OffersLib.Offer) public offers;
     mapping(uint256 => OptionsLib.Option) public options;
@@ -27,6 +30,7 @@ contract SimpleMarket is IStructureInterface {
     mapping(bytes32 => StructuredLinkedList.List) optionLists;
 
     event MakeOffer(uint256 id, bytes32 market, uint256 price);
+    event MakeOption(uint256 id, bytes32 market, uint256 price);
     event UserBalanceUpdated(address user, address token);
 
     error InvalidOffer();
@@ -69,7 +73,23 @@ contract SimpleMarket is IStructureInterface {
         return (thisOrder);
     }
 
-    function _recordOption() internal returns (uint256) {}
+    function _recordOption(OptionsLib.Option memory option) internal returns (uint256) {
+        require(option.owner != address(0), "Uh oh");
+
+        uint256 thisOrder = nextOrderId;
+        nextOrderId++;
+
+        options[thisOrder] = option;
+        bytes32 market = getMarket(option.pay_token, option.buy_token);
+        StructuredLinkedList.List storage list = optionLists[market];
+
+        uint256 spot = list.getSortedSpot(address(this), option.price);
+
+        require(list.insertBefore(spot, thisOrder), "Failed Insert");
+
+        emit MakeOption(thisOrder, market, option.price);
+        return (thisOrder);
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  Interface Functions                       */

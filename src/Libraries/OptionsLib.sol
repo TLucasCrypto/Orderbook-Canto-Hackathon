@@ -66,4 +66,11 @@ library OptionsLib {
     function reversePrice(Option storage self) internal view returns (uint256) {
         return SCALE_FACTOR.mulDiv(SCALE_FACTOR, self.price);
     }
+
+    function priceToBuy(uint256 price, uint256 pay_amount) internal pure returns(uint256) {
+        return price.mulDiv(pay_amount, SCALE_FACTOR);
+    }
+    function buyToPrice(uint256 buy_amount, uint256 pay_amount) internal pure returns(uint256) {
+        return buy_amount.mulDiv(SCALE_FACTOR, pay_amount);
+    }
 }
