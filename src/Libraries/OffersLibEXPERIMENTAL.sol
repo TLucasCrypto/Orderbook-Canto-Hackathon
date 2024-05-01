@@ -104,3 +104,19 @@ library OffersLib {
     }
 }
 
+// function greenRedSelect(
+//     Offer storage greenOffer,
+//     Offer storage redOffer
+// ) internal view returns (bool) {
+//     if (greenOffer.pay_amount < priceToBuy(redOffer)) {
+//         return false;
+//     } else if (redOffer.pay_amount < priceToBuy(greenOffer)) {
+//         return true;
+//     } else {
+//         return
+//             greenOffer.pay_amount * greenOffer.price >=
+//                 redOffer.pay_amount * redOffer.price
+//                 ? true
+//                 : false;
+//     }
+// }

@@ -7,9 +7,9 @@ import {Math} from "lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
 contract PublicMarketHarness is PublicMarket {
     using StructuredLinkedList for StructuredLinkedList.List;
     using OffersLib for OffersLib.Offer;
-    using OptionsLib for OptionsLib.Option;
     using Math for uint256;
 
+    constructor(address _validator) PublicMarket(_validator) {}
 
     function GetBuyAmount(
         uint256 pay_amount,

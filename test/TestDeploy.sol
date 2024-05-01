@@ -6,19 +6,22 @@ import {MockERC20} from "src/Mocks/MockERC20.sol";
 import {PublicMarketHarness} from "src/Harness/PublicMarketHarness.sol";
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {OffersLib} from "src/Libraries/OffersLib.sol";
-import {OptionsLib} from "src/Libraries/OptionsLib.sol";
+import {OfferValidator} from "src/Validator.sol";
+import {ERC1967Proxy} from "lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract TestDeploy is Test {
     using OffersLib for OffersLib.Offer;
-    using OptionsLib for OptionsLib.Option;
 
     PublicMarketHarness public target;
+    OfferValidator public imp;
+    ERC1967Proxy public validator;
 
     MockERC20 public usdc;
     MockERC20 public weth;
     MockERC20 public weth2;
 
     address public _target;
+    address public _validator;
 
     address public _usdc;
     address public _weth;
@@ -34,7 +37,13 @@ contract TestDeploy is Test {
 
     function InitPublicMarket() public {
         vm.startPrank(admin);
-        target = new PublicMarketHarness();
+
+        bytes memory initData = abi.encodeWithSignature("__OfferValidator_init()");
+
+        imp = new OfferValidator();
+        validator = new ERC1967Proxy(address(imp), initData);
+
+        target = new PublicMarketHarness(address(validator));
 
         usdc = new MockERC20(6);
         weth = new MockERC20(18);
@@ -43,12 +52,14 @@ contract TestDeploy is Test {
         vm.stopPrank();
 
         _target = address(target);
+        _validator = address(validator);
 
         _usdc = address(usdc);
         _weth = address(weth);
         _weth2 = address(weth2);
 
         vm.label(_target, "Public Market");
+        vm.label(_validator, "Validator Proxy");
         vm.label(_usdc, "USDC");
         vm.label(_weth, "WETH");
         vm.label(_weth2, "WETH2");
@@ -83,15 +94,17 @@ contract TestDeploy is Test {
     function RetrieveOffer(
         uint256 id
     ) internal returns (OffersLib.Offer memory offer) {
-        (uint256 a, uint96 b, address c, address d, address e) = target.offers(
+        (uint256 a, uint96 b, address c, address d, address e, bytes memory f) = target.offers(
             id
         );
+        
         offer = OffersLib.Offer({
             price: a,
             pay_amount: b,
             pay_token: c,
             buy_token: d,
-            owner: e
+            owner: e,
+            data: f
         });
     }
 
@@ -104,7 +117,7 @@ contract TestDeploy is Test {
     ) internal returns(uint256) {
         vm.startPrank(caller);
         MockERC20(payToken).approve(_target, payAmount);
-        uint256 orderId = target.makeOffer(
+        uint256 orderId = target.makeOfferSimple(
             payToken,
             payAmount,
             buyToken,
@@ -161,7 +174,7 @@ contract TestDeploy is Test {
     }
 
     function printId(uint256 orderId) internal {
-        (uint256 price, uint96 pay, address ptoken, address btoken, address owner) = target.offers(orderId);
+        (uint256 price, uint96 pay, address ptoken, address btoken, address owner, ) = target.offers(orderId);
 
         uint256 reversed = target.GetReversePrice(orderId);
         console2.log("Order Id   : ", orderId);
@@ -181,7 +194,7 @@ contract TestDeploy is Test {
         console2.logString("");
     }
 
-    function makeOffers(
+    function makeOfferSimples(
         uint256[] memory payAmounts,
         address payToken,
         uint256[] memory buyAmounts,
@@ -192,7 +205,7 @@ contract TestDeploy is Test {
 
         for (uint256 i; i < len; ++i) {
             if (payAmounts[i] == 0 || buyAmounts[i] == 0) break;
-            target.makeOffer(payToken, payAmounts[i], buyToken, buyAmounts[i]);
+            target.makeOfferSimple(payToken, payAmounts[i], buyToken, buyAmounts[i]);
         }
         bytes32 market = target.getMarket(payToken, buyToken);
         console2.logAddress(payToken);
@@ -209,7 +222,7 @@ contract TestDeploy is Test {
     ) internal CallFrom(user) {
         StdCheats.deal(payToken, user, payAmount);
         IERC20(payToken).approve(_target, payAmount);
-        target.makeOffer(payToken, payAmount, buyToken, buyAmount);
+        target.makeOfferSimple(payToken, payAmount, buyToken, buyAmount);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

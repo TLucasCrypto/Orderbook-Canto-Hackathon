@@ -4,7 +4,6 @@ pragma solidity ^0.8.4;
 
 import "test/TestDeploy.sol";
 import {OffersLib} from "src/Libraries/OffersLib.sol";
-import {OptionsLib} from "src/Libraries/OptionsLib.sol";
 
 contract PublicMarketTest is TestDeploy { 
 
@@ -31,7 +30,7 @@ contract PublicMarketTest is TestDeploy {
         uint256 bobWethBalance = weth.balanceOf(bob);
         uint256 bobWeth2Balance = weth2.balanceOf(bob);
         vm.prank(bob);
-        uint256 bobOrder = target.makeOffer(_weth2, 2 * required, _weth, offerAmount);
+        uint256 bobOrder = target.makeOfferSimple(_weth2, 2 * required, _weth, offerAmount);
         
         console2.log("Bob Offer");
         PrintOffer(bobOrder);

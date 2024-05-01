@@ -26,6 +26,11 @@ library SoladySafeCastLib {
         return uint40(x);
     }
 
+    function toUint48(uint256 x) internal pure returns (uint48) {
+        if (x >= 1 << 48) _revertOverflow();
+            return uint40(x);
+        }
+
     function toUint64(uint256 x) internal pure returns (uint64) {
         if (x >= 1 << 64) _revertOverflow();
         return uint64(x);
