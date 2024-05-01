@@ -11,11 +11,6 @@ contract PublicMarketTest is TestDeploy {
         InitPublicMarket();
     }
 
-    function testRandomStuff() public {
-
-
-    }
-
     function testMakeOffer() public {
         uint256 offerAmount = 1e18;
         uint256 required = 1.5e18;
@@ -29,11 +24,13 @@ contract PublicMarketTest is TestDeploy {
         GiveApproval(bob, _weth2);
         uint256 bobWethBalance = weth.balanceOf(bob);
         uint256 bobWeth2Balance = weth2.balanceOf(bob);
+
+        target.offers(1);
         vm.prank(bob);
         uint256 bobOrder = target.makeOfferSimple(_weth2, 2 * required, _weth, offerAmount);
         
         console2.log("Bob Offer");
-        PrintOffer(bobOrder);
+        printId(bobOrder);
 
         console2.log("Bob Weth Condition");
         assertGe(weth.balanceOf(bob) - bobWethBalance, offerAmount);
@@ -42,4 +39,46 @@ contract PublicMarketTest is TestDeploy {
 
 
     }
+
+    function testExpiryOffer() public {
+        vm.warp(100000);
+
+        bytes32 greenMarket = target.getMarket(_weth, _weth2);
+
+        GiveApproval(alice, _weth);
+        GiveApproval(bob, _weth2);
+
+        vm.startPrank(alice);
+        uint256 offerId = target.makeOfferExpiry(_weth, 1e18, _weth2, 3e18, 100100);
+        target.makeOfferExpiry(_weth, 1e18, _weth2, 2e18, 100);
+        target.makeOfferExpiry(_weth, 1e18, _weth2, 2e18, 0);
+        vm.stopPrank();
+
+        printList(greenMarket, "Green Market");
+        console2.log("");
+        console2.log("- - - - - - - - - - - -");
+        console2.log("");
+
+        vm.startPrank(bob);
+        target.marketBuy(_weth2, 2e18, _weth, 5e17);
+        vm.stopPrank();
+
+
+        printList(greenMarket, "Green Market");
+
+        OffersLib.Offer memory offer = RetrieveOffer(offerId);
+        assertEq(offer.expiry, 100100);
+        assertApproxEqAbs(offer.pay_amount, uint256(1e18) / uint256(3), 1);
+        assertEq(1, target.GetListSize(greenMarket));
+    }
+
+    function testExpiryOverflow() public {
+        GiveApproval(alice, _weth);
+
+        vm.startPrank(alice);
+        vm.expectRevert();
+        target.makeOfferExpiry(_weth, 1e18, _weth2, 2e18, type(uint48).max + 1);
+        vm.stopPrank();
+    }
+
 }

@@ -9,7 +9,15 @@ contract PublicMarketHarness is PublicMarket {
     using OffersLib for OffersLib.Offer;
     using Math for uint256;
 
-    constructor(address _validator) PublicMarket(_validator) {}
+    function GetMarkets(
+        address pay_token,
+        address buy_token
+    ) public pure returns (bytes32, bytes32) {
+        return (
+            getMarket(pay_token, buy_token),
+            _getReversedMarket(pay_token, buy_token)
+        );
+    }
 
     function GetBuyAmount(
         uint256 pay_amount,
@@ -28,6 +36,10 @@ contract PublicMarketHarness is PublicMarket {
     function GetReversePrice(uint256 orderId) public returns (uint256) {
         OffersLib.Offer storage offer = offers[orderId];
         return offer.reversePrice();
+    }
+
+    function GetListSize(bytes32 market) public returns (uint256) {
+        return marketLists[market].size;
     }
     function CleanMarkets(
         address tokenOne,

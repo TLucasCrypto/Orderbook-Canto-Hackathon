@@ -17,10 +17,10 @@ contract SimpleMarket is IStructureInterface {
     uint256 nextOfferId = 1;
     // Maximum time limit of 1 year
     uint256 MAX_EXPIRY = 365 days;
+    
     // Used as the address for native tokens
-    address native = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-
-    address immutable validator;
+    // Currently not implemented
+    // address native = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     // User address => Token address => balance
     mapping(address => mapping(address => uint256)) public userBalances;
@@ -28,7 +28,7 @@ contract SimpleMarket is IStructureInterface {
     mapping(uint256 => OffersLib.Offer) public offers;
 
     // Offer Id to linked list
-    mapping(bytes32 => StructuredLinkedList.List) marketLists;
+    mapping(bytes32 => StructuredLinkedList.List) internal marketLists;
 
     event MakeOffer(uint256 id, bytes32 market, uint256 price);
     event UserBalanceUpdated(address user, address token);
@@ -37,6 +37,7 @@ contract SimpleMarket is IStructureInterface {
     error PrecisionLoss();
     error InvalidOwnership();
     error NotFound();
+    error NoneBought();
 
     /// @notice Get the market identifier for a token pair
     /// @dev Each market has a unique bytes32 identifier based on the token pair

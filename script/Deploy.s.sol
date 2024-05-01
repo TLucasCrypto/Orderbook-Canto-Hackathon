@@ -3,16 +3,16 @@ pragma solidity ^0.8.0;
 
 import "lib/forge-std/src/Script.sol";
 import {PublicMarket} from "src/PublicMarket.sol";
-import {OfferValidator} from "src/Validator.sol";
-import {ERC1967Proxy} from "lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+// import {OfferValidator} from "src/Validator.sol";
+// import {ERC1967Proxy} from "lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ERC20Mock} from "lib/openzeppelin-contracts/contracts/mocks/token/ERC20Mock.sol";
 
 
 contract Deploy is Script {
 
     PublicMarket public market;
-    OfferValidator public validator;
-    ERC1967Proxy public proxy;
+    // OfferValidator public validator;
+    // ERC1967Proxy public proxy;
 
     ERC20Mock public mockNote;
     ERC20Mock public mockWCanto;
@@ -41,10 +41,10 @@ contract Deploy is Script {
         bytes memory initData = abi.encodeWithSignature("__OfferValidator_init()");
         vm.startBroadcast(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
 
-        validator = new OfferValidator();
-        proxy = new ERC1967Proxy(address(validator), initData);
+        // validator = new OfferValidator();
+        // proxy = new ERC1967Proxy(address(validator), initData);
 
-        market = new PublicMarket(address(proxy));
+        market = new PublicMarket();
 
         mockNote.approve(address(market), 1e24);
         mockWCanto.approve(address(market), 1e24);

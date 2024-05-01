@@ -3,25 +3,27 @@ pragma solidity ^0.8.4;
 
 import "lib/forge-std/src/Test.sol";
 import {MockERC20} from "src/Mocks/MockERC20.sol";
+import {SoladySafeCastLib} from "src/Libraries/SoladySafeCastLib.sol";
 import {PublicMarketHarness} from "src/Harness/PublicMarketHarness.sol";
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {OffersLib} from "src/Libraries/OffersLib.sol";
-import {OfferValidator} from "src/Validator.sol";
-import {ERC1967Proxy} from "lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+// import {OfferValidator} from "src/Validator.sol";
+// import {ERC1967Proxy} from "lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract TestDeploy is Test {
     using OffersLib for OffersLib.Offer;
+    using SoladySafeCastLib for uint256;
 
     PublicMarketHarness public target;
-    OfferValidator public imp;
-    ERC1967Proxy public validator;
+    // OfferValidator public imp;
+    // ERC1967Proxy public validator;
 
     MockERC20 public usdc;
     MockERC20 public weth;
     MockERC20 public weth2;
 
     address public _target;
-    address public _validator;
+    // address public _validator;
 
     address public _usdc;
     address public _weth;
@@ -38,12 +40,12 @@ contract TestDeploy is Test {
     function InitPublicMarket() public {
         vm.startPrank(admin);
 
-        bytes memory initData = abi.encodeWithSignature("__OfferValidator_init()");
+        // bytes memory initData = abi.encodeWithSignature("__OfferValidator_init()");
 
-        imp = new OfferValidator();
-        validator = new ERC1967Proxy(address(imp), initData);
+        // imp = new OfferValidator();
+        // validator = new ERC1967Proxy(address(imp), initData);
 
-        target = new PublicMarketHarness(address(validator));
+        target = new PublicMarketHarness();
 
         usdc = new MockERC20(6);
         weth = new MockERC20(18);
@@ -52,14 +54,14 @@ contract TestDeploy is Test {
         vm.stopPrank();
 
         _target = address(target);
-        _validator = address(validator);
+        // _validator = address(validator);
 
         _usdc = address(usdc);
         _weth = address(weth);
         _weth2 = address(weth2);
 
         vm.label(_target, "Public Market");
-        vm.label(_validator, "Validator Proxy");
+        // vm.label(_validator, "Validator Proxy");
         vm.label(_usdc, "USDC");
         vm.label(_weth, "WETH");
         vm.label(_weth2, "WETH2");
@@ -117,7 +119,7 @@ contract TestDeploy is Test {
     ) internal returns(uint256) {
         vm.startPrank(caller);
         MockERC20(payToken).approve(_target, payAmount);
-        uint256 orderId = target.makeOfferSimple(
+        uint256 offerId = target.makeOfferSimple(
             payToken,
             payAmount,
             buyToken,
@@ -125,64 +127,36 @@ contract TestDeploy is Test {
         );
         vm.stopPrank();
 
-        OffersLib.Offer memory offer = RetrieveOffer(orderId);
-        uint256 buy_amount = target.GetBuyAmount(orderId);
-        bytes32 marketIdentifier = target.getMarket(
-            offer.pay_token,
-            offer.buy_token
-        );
-
-        console.log("Offer: ");
-        console.log("{");
-        console2.log("Price: ", offer.price);
-        console2.log("Pay Amount: ", offer.pay_amount);
-        console2.log("Buy Amount: ", buy_amount);
-        console2.log("Pay Token: ", offer.pay_token);
-        console2.log("Buy Token: ", offer.buy_token);
-        console2.log("Owner: ", offer.owner);
-
-        console2.logString("Market: ");
-        console2.logBytes32(marketIdentifier);
-        console.log("}");
-        return orderId;
+        printId(offerId);
+        return offerId;
     }
 
 
-    function PrintOffer(
-        uint256 orderId
+    function printId(
+        uint256 offerId
     ) internal  {
 
-        OffersLib.Offer memory offer = RetrieveOffer(orderId);
-        uint256 buy_amount = target.GetBuyAmount(orderId);
+        OffersLib.Offer memory offer = RetrieveOffer(offerId);
+        uint256 buy_amount = target.GetBuyAmount(offerId);
         bytes32 marketIdentifier = target.getMarket(
             offer.pay_token,
             offer.buy_token
         );
 
-        console.log("Offer: ");
-        console.log("{");
-        console2.log("Price: ", offer.price);
+        console2.log("Offer     : ", offerId);
+        console2.log("{");
+        console2.log("Price     : ", offer.price);
         console2.log("Pay Amount: ", offer.pay_amount);
         console2.log("Buy Amount: ", buy_amount);
-        console2.log("Pay Token: ", offer.pay_token);
-        console2.log("Buy Token: ", offer.buy_token);
-        console2.log("Owner: ", offer.owner);
+        console2.log("Pay Token : ", offer.pay_token);
+        console2.log("Buy Token : ", offer.buy_token);
+        console2.log("Owner     : ", offer.owner);
+        console2.log("Expires   : ", offer.expiry);
 
-        console2.logString("Market: ");
+        console2.log("Market    : ");
         console2.logBytes32(marketIdentifier);
-        console.log("}");
-    }
-
-    function printId(uint256 orderId) internal {
-        (uint256 price, uint96 pay, address ptoken, address btoken, address owner, ) = target.offers(orderId);
-
-        uint256 reversed = target.GetReversePrice(orderId);
-        console2.log("Order Id   : ", orderId);
-        console2.log("PRICE      : ", price);
-        console2.log("REVERSED   : ", reversed);
-        console2.log("Pay Amount : ", pay);
-        console2.log("Buy Amount : ", target.GetBuyAmount(orderId));
-        console2.logString("");
+        console2.log("}");
+        console2.log("");
     }
 
     function printList(bytes32 market, string memory id) internal {
@@ -194,7 +168,22 @@ contract TestDeploy is Test {
         console2.logString("");
     }
 
-    function makeOfferSimples(
+    function CalcPrice(
+        uint256 pay,
+        uint256 want,
+        uint256 remaining
+    ) internal returns (uint256) {
+        OffersLib.Offer memory offer;
+        offer.pay_amount = pay.toUint96();
+        offer.price = offer.buyToPriceMemory(want);
+
+        uint256 buyRemaining = (offer.price * remaining) /
+            OffersLib.SCALE_FACTOR;
+
+        return (buyRemaining);
+    }
+    
+    function makeOffersSimple(
         uint256[] memory payAmounts,
         address payToken,
         uint256[] memory buyAmounts,

@@ -69,11 +69,11 @@ contract MatchingEngine is SimpleMarket {
         if (offerId == 0) return (false, remainingAmount, purchasedAmount);
 
         OffersLib.Offer storage offer = offers[offerId];
-        
-        if (_validateOffer(offer, offerId, market)) {
+
+        if (!_validateOffer(offer, offerId, market)) {
             return (true, remainingAmount, purchasedAmount);
         }
-        
+
         if (offer.reversePrice() < requestPrice) {
             return (false, remainingAmount, purchasedAmount);
         }
@@ -83,7 +83,6 @@ contract MatchingEngine is SimpleMarket {
         // otherwise consume the offer and continue
         if (offer.priceToBuy() > remainingAmount) {
             payOut = offer.buyQuote(remainingAmount);
-
             offer.pay_amount = (offer.pay_amount - payOut).toUint96();
 
             purchasedAmount += payOut;
@@ -104,13 +103,17 @@ contract MatchingEngine is SimpleMarket {
     }
 
 
-
-
-    /// @notice Validate an offer's bytes data by above rules
+    /// @notice Validate an offer is able to be purchased
+    /// @dev This can be changed before deployment to include additional conditions
+    /// @dev In the experimental folder there is a version of this to include an upgradeable
+    /// @dev Validator contract that allows for changes and updates to validation conditions
+    /// @dev Would love community feedback on what types of orders/conditions to support
+    /// @dev Can include an extra uint96 and uint48 to the Offer struct with packing
+    /// @dev Can also change to a bytes data format to become more programmable
     /// @param offer The offer itself
     /// @param offerId The id of the offer
     /// @param market The market that contains the offer
-    /// @return bool The first bool is whether the offer is valid
+    /// @return bool True if the offer is valid, false otherwise
     function _validateOffer(OffersLib.Offer storage offer, uint256 offerId, bytes32 market) internal returns(bool) {
         if (offer.isExpired()) {
             _killOffer(offer, offerId, market);
@@ -119,7 +122,12 @@ contract MatchingEngine is SimpleMarket {
         return true;
     }
 
+    /// @notice Kill an existing offer
+    /// @param offer The offer itself
+    /// @param offerId The id of the offer
+    /// @param market The market that contains the offer
     function _killOffer(OffersLib.Offer storage offer, uint256 offerId, bytes32 market) private {
+        console2.log("KILL");
         userBalances[offer.owner][offer.pay_token] += offer.pay_amount;
         marketLists[market].remove(offerId);
         delete offers[offerId];

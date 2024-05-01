@@ -14,10 +14,6 @@ contract PublicMarket is MatchingEngine {
     using SoladySafeCastLib for uint256;
     using SafeERC20 for IERC20;
 
-    constructor(address _validator) {
-        validator = _validator;
-    }
-
     /// @notice Public entrypoint to making an offer
     /// @dev See makeOfferCustom
     function makeOfferSimple(
@@ -26,7 +22,7 @@ contract PublicMarket is MatchingEngine {
         address buy_tkn,
         uint256 buy_amt
     ) external returns (uint256) {
-        return _makeOffer(pay_tkn, pay_amt, buy_tkn, buy_amt, 0);
+        return _makeOffer(pay_tkn, pay_amt, buy_tkn, buy_amt, type(uint48).max);
     }
 
     /// @notice Public entrypoint to making an offer
@@ -62,6 +58,8 @@ contract PublicMarket is MatchingEngine {
         if (pay_tkn == address(0)) revert InvalidOffer();
         if (buy_tkn == address(0)) revert InvalidOffer();
         if (pay_tkn == buy_tkn) revert InvalidOffer();
+        if (uint256(expires) > block.timestamp + MAX_EXPIRY)
+            revert InvalidOffer();
 
         uint256 received = receiveFunds(
             pay_tkn,
@@ -71,6 +69,7 @@ contract PublicMarket is MatchingEngine {
         );
 
         uint256 orderPrice = OffersLib.buyToPrice(buy_amt, received);
+        emit DEBUG("Order Price: ", orderPrice);
         if (orderPrice < OffersLib.MAX_PRECISION_LOSS) revert PrecisionLoss();
 
         OffersLib.Offer memory offer = OffersLib.Offer({
@@ -93,7 +92,6 @@ contract PublicMarket is MatchingEngine {
         sendFunds(buy_tkn, msg.sender);
         return orderId;
     }
-
 
     /// @notice Public entrypoint to making a marketBuy
     /// @dev Unpurchased funds will be returned to user
@@ -135,6 +133,8 @@ contract PublicMarket is MatchingEngine {
 
         uint256 remaining = _marketBuy(offer);
 
+        if (remaining == buy_amt) revert NoneBought();
+
         // Need to review this
         sendFunds(buy_tkn, msg.sender);
         if (remaining != 0) {
@@ -156,9 +156,7 @@ contract PublicMarket is MatchingEngine {
         address from,
         address receiver
     ) internal returns (uint256) {
-        emit DEBUG("Yo: ", 1);
         uint256 balanceBefore = IERC20(pay_token).balanceOf(receiver);
-        emit DEBUG("Wtf: ", 1);
         IERC20(pay_token).transferFrom(from, receiver, pay_amount);
         return IERC20(pay_token).balanceOf(receiver) - balanceBefore;
     }
@@ -189,7 +187,11 @@ contract PublicMarket is MatchingEngine {
         }
     }
 
-    function getItems(address pay_token, address buy_token, uint256 numItems) external view returns (uint256[] memory, uint256[] memory) {
+    function getItems(
+        address pay_token,
+        address buy_token,
+        uint256 numItems
+    ) external view returns (uint256[] memory, uint256[] memory) {
         bytes32 market = getMarket(pay_token, buy_token);
 
         StructuredLinkedList.List storage list = marketLists[market];
