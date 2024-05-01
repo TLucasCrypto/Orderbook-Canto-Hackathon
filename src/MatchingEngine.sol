@@ -1,9 +1,9 @@
 //SPDX-LICENSE-IDENTIFIER: UNLICENSED
 pragma solidity 0.8.24;
 
-import {SimpleMarket, SoladySafeCastLib, StructuredLinkedList} from "src/SimpleMarket.sol";
-import {OffersLib, IOfferValidator} from "src/Libraries/OffersLib.sol";
-
+import {SimpleMarket, StructuredLinkedList} from "src/SimpleMarket.sol";
+import {OffersLib} from "src/Libraries/OffersLib.sol";
+import {SoladySafeCastLib} from "src/Libraries/SoladySafeCastLib.sol";
 import {console2} from "lib/forge-std/src/Test.sol";
 
 contract MatchingEngine is SimpleMarket {
@@ -69,24 +69,11 @@ contract MatchingEngine is SimpleMarket {
         if (offerId == 0) return (false, remainingAmount, purchasedAmount);
 
         OffersLib.Offer storage offer = offers[offerId];
-        // If there is extra data with the offer, validate the offer
-        if (offer.data.length > 0) {
-            (bool valid, bool kill) = IOfferValidator(validator).validateOffer(offer.data);
-            // Check kill before valid so offers will be removed
-            if (kill) {
-                userBalances[offer.owner][offer.pay_token] += offer.pay_amount;
-                marketLists[market].remove(offerId);
-                delete offers[offerId];
-                return (true, remainingAmount, purchasedAmount);
-            }
-
-            // If the offer is invalid, still need to continue looking
-            if (!valid) {
-                return (true, remainingAmount, purchasedAmount);
-            }
-            // If valid and !kill we continue
+        
+        if (_validateOffer(offer, offerId, market)) {
+            return (true, remainingAmount, purchasedAmount);
         }
-        // Check that there is price overlap
+        
         if (offer.reversePrice() < requestPrice) {
             return (false, remainingAmount, purchasedAmount);
         }
@@ -116,6 +103,29 @@ contract MatchingEngine is SimpleMarket {
         }
     }
 
+
+
+
+    /// @notice Validate an offer's bytes data by above rules
+    /// @param offer The offer itself
+    /// @param offerId The id of the offer
+    /// @param market The market that contains the offer
+    /// @return bool The first bool is whether the offer is valid
+    function _validateOffer(OffersLib.Offer storage offer, uint256 offerId, bytes32 market) internal returns(bool) {
+        if (offer.isExpired()) {
+            _killOffer(offer, offerId, market);
+            return false;
+        }
+        return true;
+    }
+
+    function _killOffer(OffersLib.Offer storage offer, uint256 offerId, bytes32 market) private {
+        userBalances[offer.owner][offer.pay_token] += offer.pay_amount;
+        marketLists[market].remove(offerId);
+        delete offers[offerId];
+    }
+
+
     /// @notice Private function to remove the first item of the list
     /// @param market The market of the order to remove
     /// @param offerId The id of the offer to remove
@@ -124,3 +134,6 @@ contract MatchingEngine is SimpleMarket {
         delete offers[offerId];
     }
 }
+
+
+

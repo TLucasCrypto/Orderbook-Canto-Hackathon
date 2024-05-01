@@ -1,26 +1,12 @@
+
+
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
 
-// interface IOrderToken {
-
-//     /// @dev See IERC20
-//     function approve(address spender, uint256 value) external returns (bool);
-
-//     /// @dev See IERC20
-//     function transferFrom(address from, address to, uint256 value) external returns (bool);
-
-//     /// @dev See IERC20
-//     function balanceOf(address account) external view returns (uint256);
-
-// }
-
 import {Math} from "lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
 import {console2} from "lib/forge-std/src/Test.sol";
 
-interface IOfferValidator {
-    function validateOffer(bytes calldata data) external view returns (bool, bool);
-}
 
 library OffersLib {
     using Math for uint256;
@@ -31,7 +17,7 @@ library OffersLib {
         address pay_token;
         address buy_token;
         address owner;
-        bytes data;
+        uint48 expiry;
     }
 
     uint256 internal constant SCALE_FACTOR = 1e27;
@@ -54,6 +40,10 @@ library OffersLib {
 
     function isActive(Offer storage self) internal view returns (bool) {
         return self.owner != address(0);
+    }
+
+    function isExpired(Offer storage self) internal view returns (bool) {
+        return (self.expiry < block.timestamp);
     }
 
     function buyToPrice(
@@ -85,11 +75,7 @@ library OffersLib {
     function reversePrice(Offer storage self) internal view returns (uint256) {
         return SCALE_FACTOR.mulDiv(SCALE_FACTOR, self.price);
     }
-
-    function offerType(Offer storage self) internal returns (uint8) {
-        return uint8(bytes1(self.data));
-    }
-
+    
     function priceToBuy(
         uint256 price,
         uint256 pay_amount
@@ -103,4 +89,3 @@ library OffersLib {
         return buy_amount.mulDiv(SCALE_FACTOR, pay_amount);
     }
 }
-

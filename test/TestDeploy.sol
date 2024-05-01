@@ -94,7 +94,7 @@ contract TestDeploy is Test {
     function RetrieveOffer(
         uint256 id
     ) internal returns (OffersLib.Offer memory offer) {
-        (uint256 a, uint96 b, address c, address d, address e, bytes memory f) = target.offers(
+        (uint256 a, uint96 b, address c, address d, address e, uint48 f) = target.offers(
             id
         );
         
@@ -104,7 +104,7 @@ contract TestDeploy is Test {
             pay_token: c,
             buy_token: d,
             owner: e,
-            data: f
+            expiry: f
         });
     }
 
