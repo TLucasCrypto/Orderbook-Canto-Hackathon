@@ -1,12 +1,10 @@
 //SPDX-LICENSE-IDENTIFIER: UNLICENSED
 pragma solidity ^0.8.4;
 
-
 import "test/TestDeploy.sol";
 import {OffersLib} from "src/Libraries/OffersLib.sol";
 
-contract PublicMarketTest is TestDeploy { 
-
+contract PublicMarketTest is TestDeploy {
     function setUp() public {
         InitPublicMarket();
     }
@@ -14,11 +12,11 @@ contract PublicMarketTest is TestDeploy {
     function testMakeOffer() public {
         uint256 offerAmount = 1e18;
         uint256 required = 1.5e18;
-        
+
         uint256 aliceBalance = weth.balanceOf(alice);
         console2.log("Alice Offer");
         uint256 orderTwo = CreateAndPrintOffer(alice, _weth, offerAmount, _weth2, required);
-        
+
         assertEq(aliceBalance - weth.balanceOf(alice), offerAmount);
 
         GiveApproval(bob, _weth2);
@@ -28,7 +26,7 @@ contract PublicMarketTest is TestDeploy {
         target.offers(1);
         vm.prank(bob);
         uint256 bobOrder = target.makeOfferSimple(_weth2, 2 * required, _weth, offerAmount);
-        
+
         console2.log("Bob Offer");
         printId(bobOrder);
 
@@ -36,8 +34,6 @@ contract PublicMarketTest is TestDeploy {
         assertGe(weth.balanceOf(bob) - bobWethBalance, offerAmount);
         console2.log("Bob Weth2 Condition");
         assertEq(bobWeth2Balance - weth2.balanceOf(bob), 2 * required);
-
-
     }
 
     function testExpiryOffer() public {
@@ -63,7 +59,6 @@ contract PublicMarketTest is TestDeploy {
         target.marketBuy(_weth2, 2e18, _weth, 5e17);
         vm.stopPrank();
 
-
         printList(greenMarket, "Green Market");
 
         OffersLib.Offer memory offer = RetrieveOffer(offerId);
@@ -80,5 +75,4 @@ contract PublicMarketTest is TestDeploy {
         target.makeOfferExpiry(_weth, 1e18, _weth2, 2e18, type(uint48).max + 1);
         vm.stopPrank();
     }
-
 }

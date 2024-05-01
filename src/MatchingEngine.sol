@@ -16,14 +16,9 @@ contract MatchingEngine is SimpleMarket {
     /// @notice Handles the overall market buy process
     /// @param request The marketBuy request data as an Offer struct
     /// @return remainingAmount The amount of the request left unbought
-    function _marketBuy(
-        OffersLib.Offer memory request
-    ) internal returns (uint256) {
+    function _marketBuy(OffersLib.Offer memory request) internal returns (uint256) {
         // Buying into the reversed market list
-        bytes32 market = _getReversedMarket(
-            request.pay_token,
-            request.buy_token
-        );
+        bytes32 market = _getReversedMarket(request.pay_token, request.buy_token);
 
         uint256 remainingAmount = request.pay_amount;
         uint256 purchasedAmount;
@@ -32,13 +27,8 @@ contract MatchingEngine is SimpleMarket {
 
         while (flag) {
             emit DEBUG("Gas Left: ", gasleft());
-            (flag, remainingAmount, purchasedAmount) = _processBuy(
-                market,
-                remainingAmount,
-                request.price,
-                purchasedAmount,
-                request.pay_token
-            );
+            (flag, remainingAmount, purchasedAmount) =
+                _processBuy(market, remainingAmount, request.price, purchasedAmount, request.pay_token);
         }
 
         if (purchasedAmount != 0) {
@@ -102,7 +92,6 @@ contract MatchingEngine is SimpleMarket {
         }
     }
 
-
     /// @notice Validate an offer is able to be purchased
     /// @dev This can be changed before deployment to include additional conditions
     /// @dev In the experimental folder there is a version of this to include an upgradeable
@@ -114,7 +103,7 @@ contract MatchingEngine is SimpleMarket {
     /// @param offerId The id of the offer
     /// @param market The market that contains the offer
     /// @return bool True if the offer is valid, false otherwise
-    function _validateOffer(OffersLib.Offer storage offer, uint256 offerId, bytes32 market) internal returns(bool) {
+    function _validateOffer(OffersLib.Offer storage offer, uint256 offerId, bytes32 market) internal returns (bool) {
         if (offer.isExpired()) {
             _killOffer(offer, offerId, market);
             return false;
@@ -133,7 +122,6 @@ contract MatchingEngine is SimpleMarket {
         delete offers[offerId];
     }
 
-
     /// @notice Private function to remove the first item of the list
     /// @param market The market of the order to remove
     /// @param offerId The id of the offer to remove
@@ -142,6 +130,3 @@ contract MatchingEngine is SimpleMarket {
         delete offers[offerId];
     }
 }
-
-
-

@@ -4,7 +4,6 @@ pragma solidity ^0.8.4;
 import "test/TestDeploy.sol";
 import {Offers} from "test/Offers.sol";
 
-
 contract MatchingEngineTest is TestDeploy, Offers {
     using OffersLib for OffersLib.Offer;
     using SoladySafeCastLib for uint256;
@@ -21,10 +20,7 @@ contract MatchingEngineTest is TestDeploy, Offers {
     }
 
     function testMarketBuy() public {
-        (bytes32 greenMarket, bytes32 redMarket) = target.GetMarkets(
-            _weth,
-            _weth2
-        );
+        (bytes32 greenMarket, bytes32 redMarket) = target.GetMarkets(_weth, _weth2);
 
         uint256 bobPay = 2.7e18;
         uint256 bobWant = 2.8e18;
@@ -55,10 +51,7 @@ contract MatchingEngineTest is TestDeploy, Offers {
         vm.stopPrank();
 
         printList(greenMarket, "Green Market");
-        (uint256 marketRemaining, uint256 marketWant, , ) = target.CleanMarkets(
-            _weth,
-            _weth2
-        );
+        (uint256 marketRemaining, uint256 marketWant,,) = target.CleanMarkets(_weth, _weth2);
 
         console2.log("");
         console2.log("- - - - - - - - - - - -");
@@ -79,7 +72,6 @@ contract MatchingEngineTest is TestDeploy, Offers {
         assertGe(target.userBalances(alice, _weth2) + marketWant, 8e17 + 1.2e18 + 1.8e18 + 1.9e18);
         assertGe(weth.balanceOf(bob) - bobBalanceWeth + marketRemaining, 1e18 + 1.5e18 + 1.1e18 + 1.8e17);
     }
-
 
     function testFuzzMarketBuy(uint256) public {
         uint256 r1;
@@ -123,10 +115,7 @@ contract MatchingEngineTest is TestDeploy, Offers {
 
         printList(greenMarket, "Market After ");
 
-        (uint256 marketRemaining, uint256 marketWant, , ) = target.CleanMarkets(
-            _weth,
-            _weth2
-        );
+        (uint256 marketRemaining, uint256 marketWant,,) = target.CleanMarkets(_weth, _weth2);
 
         console2.log("Bob Pays      : ", r1);
         console2.log("Bob Want      : ", r2);
@@ -210,15 +199,8 @@ contract MatchingEngineTest is TestDeploy, Offers {
         console2.log("Bob Weth2  : ", userBalances.bobWeth2);
         console2.log("- - - - - - - - - - - -");
 
-
-        (
-            uint256 greenRemaining,
-            uint256 greenWant,
-            uint256 redRemaining,
-            uint256 redWant
-        ) = target.CleanMarkets(_weth, _weth2);
-
-
+        (uint256 greenRemaining, uint256 greenWant, uint256 redRemaining, uint256 redWant) =
+            target.CleanMarkets(_weth, _weth2);
 
         Balances memory randomBalances;
         // aliceWeth = sum of aliceR1 values or pay amounts
@@ -246,16 +228,8 @@ contract MatchingEngineTest is TestDeploy, Offers {
         assertGe(weth2.balanceOf(_target), redRemaining);
     }
 
-    function DebugIndivdual(
-        uint256 alicePay,
-        uint256 aliceBuy,
-        uint256 bobPay,
-        uint256 bobBuy
-    ) public {
-        (bytes32 greenMarket, bytes32 redMarket) = target.GetMarkets(
-            _weth,
-            _weth2
-        );
+    function DebugIndivdual(uint256 alicePay, uint256 aliceBuy, uint256 bobPay, uint256 bobBuy) public {
+        (bytes32 greenMarket, bytes32 redMarket) = target.GetMarkets(_weth, _weth2);
 
         vm.prank(alice);
         weth.approve(_target, type(uint256).max);
@@ -292,21 +266,12 @@ contract MatchingEngineTest is TestDeploy, Offers {
     }
 
     function testDebug() public {
-        (
-            uint256[] memory alicePay,
-            uint256[] memory aliceBuy,
-            uint256[] memory bobPay,
-            uint256[] memory bobBuy
-        ) = getOffers();
+        (uint256[] memory alicePay, uint256[] memory aliceBuy, uint256[] memory bobPay, uint256[] memory bobBuy) =
+            getOffers();
 
         uint256 item = 6;
-        
-        DebugIndivdual(
-            alicePay[item],
-            aliceBuy[item],
-            bobPay[item],
-            bobBuy[item]
-        );
+
+        DebugIndivdual(alicePay[item], aliceBuy[item], bobPay[item], bobBuy[item]);
 
         // DebugIndivdual(
         //     405586178452820382218987278,

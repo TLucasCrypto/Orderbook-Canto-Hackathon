@@ -16,25 +16,20 @@ contract PublicMarket is MatchingEngine {
 
     /// @notice Public entrypoint to making an offer
     /// @dev See makeOfferCustom
-    function makeOfferSimple(
-        address pay_tkn,
-        uint256 pay_amt,
-        address buy_tkn,
-        uint256 buy_amt
-    ) external returns (uint256) {
+    function makeOfferSimple(address pay_tkn, uint256 pay_amt, address buy_tkn, uint256 buy_amt)
+        external
+        returns (uint256)
+    {
         return _makeOffer(pay_tkn, pay_amt, buy_tkn, buy_amt, type(uint48).max);
     }
 
     /// @notice Public entrypoint to making an offer
     /// @dev See makeOfferCustom
     /// @dev Makes an offer that expires after expiry
-    function makeOfferExpiry(
-        address pay_tkn,
-        uint256 pay_amt,
-        address buy_tkn,
-        uint256 buy_amt,
-        uint256 expiry
-    ) external returns (uint256) {
+    function makeOfferExpiry(address pay_tkn, uint256 pay_amt, address buy_tkn, uint256 buy_amt, uint256 expiry)
+        external
+        returns (uint256)
+    {
         return _makeOffer(pay_tkn, pay_amt, buy_tkn, buy_amt, expiry.toUint48());
     }
 
@@ -46,27 +41,20 @@ contract PublicMarket is MatchingEngine {
     /// @param buy_tkn, the address of the token the user wants in return for pay_token
     /// @param buy_amt, the amount of buy_tkn the user wants in return for pay_amt
     /// @return Uint256, The id of the created order, 0 if fully filled
-    function _makeOffer(
-        address pay_tkn,
-        uint256 pay_amt,
-        address buy_tkn,
-        uint256 buy_amt,
-        uint48 expires
-    ) internal returns (uint256) {
+    function _makeOffer(address pay_tkn, uint256 pay_amt, address buy_tkn, uint256 buy_amt, uint48 expires)
+        internal
+        returns (uint256)
+    {
         if (pay_amt == 0) revert InvalidOffer();
         if (buy_amt == 0) revert InvalidOffer();
         if (pay_tkn == address(0)) revert InvalidOffer();
         if (buy_tkn == address(0)) revert InvalidOffer();
         if (pay_tkn == buy_tkn) revert InvalidOffer();
-        if (uint256(expires) > block.timestamp + MAX_EXPIRY)
+        if (uint256(expires) > block.timestamp + MAX_EXPIRY) {
             revert InvalidOffer();
+        }
 
-        uint256 received = receiveFunds(
-            pay_tkn,
-            pay_amt,
-            msg.sender,
-            address(this)
-        );
+        uint256 received = receiveFunds(pay_tkn, pay_amt, msg.sender, address(this));
 
         uint256 orderPrice = OffersLib.buyToPrice(buy_amt, received);
         emit DEBUG("Order Price: ", orderPrice);
@@ -100,24 +88,14 @@ contract PublicMarket is MatchingEngine {
     /// @param buy_tkn, the address of the token the user wants in return for pay_token
     /// @param buy_amt, the amount of buy_tkn the user wants in return for pay_amt
     /// @return Uint256, The amount remaining from the marketBuy
-    function marketBuy(
-        address pay_tkn,
-        uint256 pay_amt,
-        address buy_tkn,
-        uint256 buy_amt
-    ) external returns (uint256) {
+    function marketBuy(address pay_tkn, uint256 pay_amt, address buy_tkn, uint256 buy_amt) external returns (uint256) {
         if (pay_amt == 0) revert InvalidOffer();
         if (buy_amt == 0) revert InvalidOffer();
         if (pay_tkn == address(0)) revert InvalidOffer();
         if (buy_tkn == address(0)) revert InvalidOffer();
         if (pay_tkn == buy_tkn) revert InvalidOffer();
 
-        uint256 received = receiveFunds(
-            pay_tkn,
-            pay_amt,
-            msg.sender,
-            address(this)
-        );
+        uint256 received = receiveFunds(pay_tkn, pay_amt, msg.sender, address(this));
 
         uint256 orderPrice = OffersLib.buyToPrice(buy_amt, received);
         if (orderPrice < OffersLib.MAX_PRECISION_LOSS) revert PrecisionLoss();
@@ -150,12 +128,10 @@ contract PublicMarket is MatchingEngine {
     /// @param from The address to receive funds from
     /// @param receiver The address to receive the tokens
     /// @return Uint256 The amount of tokens received by receiver
-    function receiveFunds(
-        address pay_token,
-        uint256 pay_amount,
-        address from,
-        address receiver
-    ) internal returns (uint256) {
+    function receiveFunds(address pay_token, uint256 pay_amount, address from, address receiver)
+        internal
+        returns (uint256)
+    {
         uint256 balanceBefore = IERC20(pay_token).balanceOf(receiver);
         IERC20(pay_token).transferFrom(from, receiver, pay_amount);
         return IERC20(pay_token).balanceOf(receiver) - balanceBefore;
@@ -187,11 +163,11 @@ contract PublicMarket is MatchingEngine {
         }
     }
 
-    function getItems(
-        address pay_token,
-        address buy_token,
-        uint256 numItems
-    ) external view returns (uint256[] memory, uint256[] memory) {
+    function getItems(address pay_token, address buy_token, uint256 numItems)
+        external
+        view
+        returns (uint256[] memory, uint256[] memory)
+    {
         bytes32 market = getMarket(pay_token, buy_token);
 
         StructuredLinkedList.List storage list = marketLists[market];

@@ -9,30 +9,19 @@ contract PublicMarketHarness is PublicMarket {
     using OffersLib for OffersLib.Offer;
     using Math for uint256;
 
-    function GetMarkets(
-        address pay_token,
-        address buy_token
-    ) public pure returns (bytes32, bytes32) {
-        return (
-            getMarket(pay_token, buy_token),
-            _getReversedMarket(pay_token, buy_token)
-        );
+    function GetMarkets(address pay_token, address buy_token) public pure returns (bytes32, bytes32) {
+        return (getMarket(pay_token, buy_token), _getReversedMarket(pay_token, buy_token));
     }
 
-    function GetBuyAmount(
-        uint256 pay_amount,
-        uint256 price
-    ) public returns (uint256) {
+    function GetBuyAmount(uint256 pay_amount, uint256 price) public returns (uint256) {
         return price.mulDiv(pay_amount, OffersLib.SCALE_FACTOR);
     }
 
-    function GetBuyAmount(
-        uint256 id
-    ) public returns (uint256) {
+    function GetBuyAmount(uint256 id) public returns (uint256) {
         OffersLib.Offer storage offer = offers[id];
         return offer.priceToBuy();
     }
-    
+
     function GetReversePrice(uint256 orderId) public returns (uint256) {
         OffersLib.Offer storage offer = offers[orderId];
         return offer.reversePrice();
@@ -41,17 +30,10 @@ contract PublicMarketHarness is PublicMarket {
     function GetListSize(bytes32 market) public returns (uint256) {
         return marketLists[market].size;
     }
-    function CleanMarkets(
-        address tokenOne,
-        address tokenTwo
-    )
+
+    function CleanMarkets(address tokenOne, address tokenTwo)
         public
-        returns (
-            uint256 greenRemaining,
-            uint256 greenWant,
-            uint256 redRemaining,
-            uint256 redWant
-        )
+        returns (uint256 greenRemaining, uint256 greenWant, uint256 redRemaining, uint256 redWant)
     {
         bytes32 greenMarket = getMarket(tokenOne, tokenTwo);
         bytes32 redMarket = getMarket(tokenTwo, tokenOne);
@@ -72,10 +54,7 @@ contract PublicMarketHarness is PublicMarket {
         }
     }
 
-    function CleanBalance(
-        address user,
-        address token
-    ) public returns (uint256 balance) {
+    function CleanBalance(address user, address token) public returns (uint256 balance) {
         balance = userBalances[user][token];
         delete userBalances[user][token];
     }
@@ -93,6 +72,4 @@ contract PublicMarketHarness is PublicMarket {
 
         return items;
     }
-
-
 }

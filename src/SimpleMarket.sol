@@ -11,13 +11,13 @@ contract SimpleMarket is IStructureInterface {
     event DEBUG(string s, uint256 v);
     event DEBUG(string s, bytes b);
     event DEBUG(string s, address a);
-    
+
     // Counter for unique offers
     // OfferId of 0 is a critical value, do not set zero to non-zero value
     uint256 nextOfferId = 1;
     // Maximum time limit of 1 year
     uint256 MAX_EXPIRY = 365 days;
-    
+
     // Used as the address for native tokens
     // Currently not implemented
     // address native = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -44,33 +44,25 @@ contract SimpleMarket is IStructureInterface {
     /// @param pay_token, the address of the token the user has and wants to trade
     /// @param buy_token, the address of the token the user wants in return for pay_token
     /// @return Bytes32 identifier of the market
-    function getMarket(
-        address pay_token,
-        address buy_token
-    ) public pure returns (bytes32) {
+    function getMarket(address pay_token, address buy_token) public pure returns (bytes32) {
         return keccak256(abi.encode(pay_token, buy_token));
     }
 
     /// @notice Get the reversed market identifier for a token pair
     /// @dev A reversed market is the flipped token pairs
     /// @dev Example: Market = WCanto/Note , Reversed Market Note/WCanto
-    /// @dev Used to keep code consistent of pay_token then buy_token in function calls 
+    /// @dev Used to keep code consistent of pay_token then buy_token in function calls
     /// @param pay_token, the address of the token the user has and wants to trade
     /// @param buy_token, the address of the token the user wants in return for pay_token
     /// @return Bytes32 identifier of the reverse market pair
-    function _getReversedMarket(
-        address pay_token,
-        address buy_token
-    ) internal pure returns (bytes32) {
+    function _getReversedMarket(address pay_token, address buy_token) internal pure returns (bytes32) {
         return getMarket(buy_token, pay_token);
     }
 
     /// @notice Stores an offer in the appropriate market list
     /// @param offer The offer to record
     /// @return Uint256 The id of the recorded offer
-    function _recordOffer(
-        OffersLib.Offer memory offer
-    ) internal returns (uint256) {
+    function _recordOffer(OffersLib.Offer memory offer) internal returns (uint256) {
         require(offer.owner != address(0), "Uh oh");
 
         uint256 thisOrder = nextOfferId;
@@ -88,7 +80,6 @@ contract SimpleMarket is IStructureInterface {
         emit MakeOffer(thisOrder, market, offer.price);
         return (thisOrder);
     }
-
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  Interface Functions                       */
