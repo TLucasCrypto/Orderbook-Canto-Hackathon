@@ -3,11 +3,14 @@ pragma solidity 0.8.24;
 
 import {StructuredLinkedList, IStructureInterface} from "src/Libraries/StructuredLinkedList.sol";
 import {OffersLib} from "src/Libraries/OffersLib.sol";
+import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
 
 contract SimpleMarket is IStructureInterface {
     using StructuredLinkedList for StructuredLinkedList.List;
     using OffersLib for OffersLib.Offer;
-
+    using SafeERC20 for IERC20;
     // event DEBUG(string s, uint256 v);
     // event DEBUG(string s, bytes b);
     // event DEBUG(string s, address a);
@@ -30,6 +33,7 @@ contract SimpleMarket is IStructureInterface {
     error InvalidOwnership();
     error NotFound();
     error NoneBought();
+    error BadInsert(uint256 pos);
 
     /// @notice Get the market identifier for a token pair
     /// @dev Each market has a unique bytes32 identifier based on the token pair
@@ -66,13 +70,39 @@ contract SimpleMarket is IStructureInterface {
         StructuredLinkedList.List storage list = marketLists[market];
 
         uint256 spot = list.getSortedSpot(address(this), offer.price);
-
-        require(list.insertBefore(spot, thisOrder), "Failed Insert");
+        
+        if (!list.insertBefore(spot, thisOrder)) revert BadInsert(spot);
 
         emit MakeOffer(thisOrder, market, offer.price);
         return (thisOrder);
     }
 
+
+    /// @notice Transfer funds from --> to and calculate received amount
+    /// @param pay_token The address of the token to receive
+    /// @param pay_amount The amount of tokens to receive
+    /// @param from The address to receive funds from
+    /// @param to The address to receive the tokens
+    /// @return Uint256 The amount of tokens received by to
+    function _receiveFunds(address pay_token, uint256 pay_amount, address from, address to)
+        internal
+        returns (uint256)
+    {
+        uint256 balanceBefore = IERC20(pay_token).balanceOf(to);
+        IERC20(pay_token).safeTransferFrom(from, to, pay_amount);
+        return IERC20(pay_token).balanceOf(to) - balanceBefore;
+    }
+
+    /// @notice Send funds in userBalances to users
+    /// @param token The address of the token to receive
+    /// @param to The address to receive the tokens
+    function _sendFunds(address to, address token) internal {
+        uint256 amount = userBalances[to][token];
+        if (amount != 0) {
+            delete userBalances[to][token];
+            IERC20(token).safeTransfer(to, amount);
+        }
+    }
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  Interface Functions                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

@@ -37,7 +37,7 @@ contract PublicMarketTest is TestDeploy {
     }
 
     function testExpiryOffer() public {
-        vm.warp(100000);
+        vm.warp(100);
 
         bytes32 greenMarket = target.getMarket(_weth, _weth2);
 
@@ -45,15 +45,17 @@ contract PublicMarketTest is TestDeploy {
         GiveApproval(bob, _weth2);
 
         vm.startPrank(alice);
-        uint256 offerId = target.makeOfferExpiry(_weth, 1e18, _weth2, 3e18, 100100);
-        target.makeOfferExpiry(_weth, 1e18, _weth2, 2e18, 100);
-        target.makeOfferExpiry(_weth, 1e18, _weth2, 2e18, 0);
+        uint256 offerId = target.makeOfferExpiry(_weth, 1e18, _weth2, 3e18, 1000);
+        target.makeOfferExpiry(_weth, 1e18, _weth2, 2e18, 200);
+        target.makeOfferExpiry(_weth, 1e18, _weth2, 2e18, 105);
         vm.stopPrank();
 
         printList(greenMarket, "Green Market");
         console2.log("");
         console2.log("- - - - - - - - - - - -");
         console2.log("");
+
+        vm.warp(300);
 
         vm.startPrank(bob);
         target.marketBuy(_weth2, 2e18, _weth, 5e17);
@@ -62,7 +64,7 @@ contract PublicMarketTest is TestDeploy {
         printList(greenMarket, "Green Market");
 
         OffersLib.Offer memory offer = RetrieveOffer(offerId);
-        assertEq(offer.expiry, 100100);
+        assertEq(offer.expiry, 1000);
         assertApproxEqAbs(offer.pay_amount, uint256(1e18) / uint256(3), 1);
         assertEq(1, target.GetListSize(greenMarket));
     }
