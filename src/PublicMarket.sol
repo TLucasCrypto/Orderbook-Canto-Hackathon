@@ -4,8 +4,6 @@ pragma solidity 0.8.24;
 import {MatchingEngine, SoladySafeCastLib, StructuredLinkedList, OffersLib} from "src/MatchingEngine.sol";
 import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SoladySafeCastLib} from "src/Libraries/SoladySafeCastLib.sol";
-
-// import {ERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract PublicMarket is MatchingEngine {
@@ -13,6 +11,12 @@ contract PublicMarket is MatchingEngine {
     using OffersLib for OffersLib.Offer;
     using SoladySafeCastLib for uint256;
     using SafeERC20 for IERC20;
+
+    // Used for mainnet deployment to register on the turnstile
+    // constructor(address _turnstile, address owner) {
+    //     (bool ok, ) = _turnstile.call(abi.encodeWithSignature("register(address)", owner));
+    //     require(ok, "Failed to register");
+    // }
 
     /// @notice Public entrypoint to making an offer
     /// @dev See makeOfferCustom
@@ -50,14 +54,10 @@ contract PublicMarket is MatchingEngine {
         if (pay_tkn == address(0)) revert InvalidOffer();
         if (buy_tkn == address(0)) revert InvalidOffer();
         if (pay_tkn == buy_tkn) revert InvalidOffer();
-        if (uint256(expires) > block.timestamp + MAX_EXPIRY) {
-            revert InvalidOffer();
-        }
 
         uint256 received = receiveFunds(pay_tkn, pay_amt, msg.sender, address(this));
 
         uint256 orderPrice = OffersLib.buyToPrice(buy_amt, received);
-        emit DEBUG("Order Price: ", orderPrice);
         if (orderPrice < OffersLib.MAX_PRECISION_LOSS) revert PrecisionLoss();
 
         OffersLib.Offer memory offer = OffersLib.Offer({
@@ -122,19 +122,20 @@ contract PublicMarket is MatchingEngine {
         return remaining;
     }
 
-    /// @notice Transfer funds from to receiver and calculate received amount
+    /// @notice Transfer funds from --> to and calculate received amount
     /// @param pay_token The address of the token to receive
     /// @param pay_amount The amount of tokens to receive
     /// @param from The address to receive funds from
-    /// @param receiver The address to receive the tokens
-    /// @return Uint256 The amount of tokens received by receiver
-    function receiveFunds(address pay_token, uint256 pay_amount, address from, address receiver)
+    /// @param to The address to receive the tokens
+    /// @return Uint256 The amount of tokens received by to
+    function receiveFunds(address pay_token, uint256 pay_amount, address from, address to)
         internal
         returns (uint256)
     {
-        uint256 balanceBefore = IERC20(pay_token).balanceOf(receiver);
-        IERC20(pay_token).transferFrom(from, receiver, pay_amount);
-        return IERC20(pay_token).balanceOf(receiver) - balanceBefore;
+
+        uint256 balanceBefore = IERC20(pay_token).balanceOf(to);
+        IERC20(pay_token).transferFrom(from, to, pay_amount);
+        return IERC20(pay_token).balanceOf(to) - balanceBefore;
     }
 
     /// @notice Allow user to withdraw their balance of tokens from contract
@@ -154,15 +155,21 @@ contract PublicMarket is MatchingEngine {
 
     /// @notice Send funds in userBalances to users
     /// @param token The address of the token to receive
-    /// @param receiver The address to receive the tokens
-    function sendFunds(address token, address receiver) internal {
-        uint256 amount = userBalances[receiver][token];
+    /// @param to The address to receive the tokens
+    function sendFunds(address token, address to) internal {
+        uint256 amount = userBalances[to][token];
         if (amount != 0) {
-            delete userBalances[receiver][token];
-            IERC20(token).safeTransfer(receiver, amount);
+            delete userBalances[to][token];
+            IERC20(token).safeTransfer(to, amount);
         }
     }
 
+    /// @notice Get the top number of items in a market
+    /// @param pay_token The collateral token for the market
+    /// @param buy_token The token that is wanted for the provided collateral
+    /// @param numItems The number of items to return IF less than market size
+    /// @return uint256[] The array of pay_amounts for the top market orders
+    /// @return uint256[] The array of buy_amounts for the top market orders
     function getItems(address pay_token, address buy_token, uint256 numItems)
         external
         view

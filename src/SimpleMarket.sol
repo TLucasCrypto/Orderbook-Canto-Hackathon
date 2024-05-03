@@ -8,25 +8,17 @@ contract SimpleMarket is IStructureInterface {
     using StructuredLinkedList for StructuredLinkedList.List;
     using OffersLib for OffersLib.Offer;
 
-    event DEBUG(string s, uint256 v);
-    event DEBUG(string s, bytes b);
-    event DEBUG(string s, address a);
+    // event DEBUG(string s, uint256 v);
+    // event DEBUG(string s, bytes b);
+    // event DEBUG(string s, address a);
 
     // Counter for unique offers
     // OfferId of 0 is a critical value, do not set zero to non-zero value
     uint256 nextOfferId = 1;
-    // Maximum time limit of 1 year
-    uint256 MAX_EXPIRY = 365 days;
-
-    // Used as the address for native tokens
-    // Currently not implemented
-    // address native = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-
     // User address => Token address => balance
     mapping(address => mapping(address => uint256)) public userBalances;
     // OfferId to the offer struct
     mapping(uint256 => OffersLib.Offer) public offers;
-
     // Offer Id to linked list
     mapping(bytes32 => StructuredLinkedList.List) internal marketLists;
 

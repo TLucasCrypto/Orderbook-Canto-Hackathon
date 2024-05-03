@@ -1,7 +1,7 @@
 //SPDX-LICENSE-IDENTIFIER: UNLICENSED
 pragma solidity 0.8.24;
 
-import {IOfferValidator} from "src/Libraries/OffersLibEXP.sol";
+import {IOfferValidator} from "src/Experimental/OffersLib.sol";
 import {UUPSUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {AccessControlUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 

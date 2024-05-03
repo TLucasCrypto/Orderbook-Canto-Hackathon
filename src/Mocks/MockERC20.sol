@@ -7,6 +7,7 @@ import {ERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol"
 contract MockERC20 is ERC20 {
     uint8 private immutable _decimals;
 
+
     constructor(uint8 decimals_) ERC20("TestToken", "TT") {
         _decimals = decimals_;
     }
@@ -22,4 +23,5 @@ contract MockERC20 is ERC20 {
     function decimals() public view override returns (uint8) {
         return _decimals;
     }
+
 }

@@ -4,7 +4,6 @@ pragma solidity 0.8.24;
 import {SimpleMarket, StructuredLinkedList} from "src/SimpleMarket.sol";
 import {OffersLib} from "src/Libraries/OffersLib.sol";
 import {SoladySafeCastLib} from "src/Libraries/SoladySafeCastLib.sol";
-import {console2} from "lib/forge-std/src/Test.sol";
 
 contract MatchingEngine is SimpleMarket {
     using StructuredLinkedList for StructuredLinkedList.List;
@@ -26,7 +25,6 @@ contract MatchingEngine is SimpleMarket {
         bool flag = true;
 
         while (flag) {
-            emit DEBUG("Gas Left: ", gasleft());
             (flag, remainingAmount, purchasedAmount) =
                 _processBuy(market, remainingAmount, request.price, purchasedAmount, request.pay_token);
         }
@@ -116,7 +114,6 @@ contract MatchingEngine is SimpleMarket {
     /// @param offerId The id of the offer
     /// @param market The market that contains the offer
     function _killOffer(OffersLib.Offer storage offer, uint256 offerId, bytes32 market) private {
-        console2.log("KILL");
         userBalances[offer.owner][offer.pay_token] += offer.pay_amount;
         marketLists[market].remove(offerId);
         delete offers[offerId];
