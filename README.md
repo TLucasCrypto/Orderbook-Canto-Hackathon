@@ -70,5 +70,3 @@ A different version of OffersLib is found in the experimental folder of this rep
 #### StructuredLinkedList.sol
 A library written by Vittorio Minacori (https://github.com/vittominacori). "An utility library for working with sorted linked list data structures in your Solidity project." This is the main data structure for each orderbook. It is slightly modified from the original, specifically the getSortedSpot function to sort in order of increasing price. This library uses the IStructureInterface to determine sort order, and ends up calling back into this orderbook contract's getValue function.
 
-## Dev Notes
-The orderbook is in a working state, and has been tested moderately. The testing includes, but is not limited to, the tests included in this repo. Due to a refactor of the contracts, many of the tests I had written were unable to be included in the updated codebase. A project like this must undergo much more rigorous and formal testing/auditing before being put on mainnet for users to interact with.  
