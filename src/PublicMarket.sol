@@ -1,4 +1,4 @@
-//SPDX-LICENSE-IDENTIFIER: UNLICENSED
+//SPDX-LICENSE-IDENTIFIER: MIT
 pragma solidity 0.8.24;
 
 import {MatchingEngine, SoladySafeCastLib, StructuredLinkedList, OffersLib} from "src/MatchingEngine.sol";
@@ -49,7 +49,7 @@ contract PublicMarket is MatchingEngine {
         if (buy_tkn == address(0)) revert InvalidOffer();
         if (pay_tkn == buy_tkn) revert InvalidOffer();
 
-        uint256 received = _receiveFunds(pay_tkn, pay_amt, msg.sender, address(this));
+        uint256 received = _receiveFunds(pay_tkn, pay_amt, msg.sender);
 
         uint256 orderPrice = OffersLib.buyToPrice(buy_amt, received);
         if (orderPrice < OffersLib.MAX_PRECISION_LOSS) revert PrecisionLoss();
@@ -114,7 +114,7 @@ contract PublicMarket is MatchingEngine {
         if (pay_tkn == buy_tkn) revert InvalidOffer();
         if (expires <= block.timestamp) revert InvalidOffer();
 
-        uint256 received = _receiveFunds(pay_tkn, pay_amt, msg.sender, address(this));
+        uint256 received = _receiveFunds(pay_tkn, pay_amt, msg.sender);
 
         uint256 orderPrice = OffersLib.buyToPrice(buy_amt, received);
         if (orderPrice < OffersLib.MAX_PRECISION_LOSS) revert PrecisionLoss();

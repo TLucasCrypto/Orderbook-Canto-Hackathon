@@ -1,4 +1,4 @@
-//SPDX-LICENSE-IDENTIFIER: UNLICENSED
+//SPDX-LICENSE-IDENTIFIER: MIT
 pragma solidity 0.8.24;
 
 import {IOfferValidator} from "src/Experimental/OffersLib.sol";

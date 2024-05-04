@@ -10,6 +10,3 @@ deploy-orderbook:
 
 anvil-canto:
 	anvil --rpc-url canto --fork-block-number 9425799
-
-anvil-demo:
-	anvil --load-state AnvilState.txt

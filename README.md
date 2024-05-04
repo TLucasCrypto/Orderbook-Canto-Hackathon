@@ -10,9 +10,9 @@ Canto is uniquely positioned due to its identity as a DeFi idealist blockchain t
 
 One of the major problems with current orderbooks are that they are highly fragmented. An orderbook run by Coinbase cannot interact with an orderbook run by Binance, and the liquidity is halved. Protocols are incentivized to keep their own orderbooks to profit off the exorbitant fees, but doing so degrades user experience. Some protocols try to bridge this gap by aggregating different exchanges and finding the best prices for your tokens, but this is inefficient and costly. 
 
-This project is permissionless, and anyone can use it to trade any ERC20 tokens. Technically, any token can be listed on the orderbook as long as it has functions for transfer(address,uint256), transferFrom(address,address,uint256), and balanceOf(address). It is not advised to use non-fungible tokens with the ordrerbook in its current state, but could potentially be added if needed. A second non-fungible deployment is a more realistic option.
+This project is permissionless, and anyone can use it to trade any ERC20 tokens. Technically, any token can be listed on the orderbook as long as it has functions for transfer(address,uint256), transferFrom(address,address,uint256), and balanceOf(address). 
 
-As this project will be deployed on Canto, I would love feedback from the Canto community. 
+As this project will be deployed on Canto, I would love feedback from the Canto community. Feel free to use the issues tab on this github repository to add feedback, issues, or discussion relating to this project.
 
 ## Introduction 
 
@@ -69,7 +69,6 @@ A different version of OffersLib is found in the experimental folder of this rep
 
 #### StructuredLinkedList.sol
 A library written by Vittorio Minacori (https://github.com/vittominacori). "An utility library for working with sorted linked list data structures in your Solidity project." This is the main data structure for each orderbook. It is slightly modified from the original, specifically the getSortedSpot function to sort in order of increasing price. This library uses the IStructureInterface to determine sort order, and ends up calling back into this orderbook contract's getValue function.
-
 
 ## Dev Notes
 The orderbook is in a working state, and has been tested moderately. The testing includes, but is not limited to, the tests included in this repo. Due to a refactor of the contracts, many of the tests I had written were unable to be included in the updated codebase. A project like this must undergo much more rigorous and formal testing/auditing before being put on mainnet for users to interact with.  
